@@ -50,5 +50,5 @@ output "ecr_repository_arn" {
 
 output "ssh_command" {
   description = "SSH command to connect to the instance"
-  value       = var.key_name != "" ? "ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_instance.main.public_ip}" : "No key pair specified"
+  value       = var.key_name != "" ? "ssh -i ~/.ssh/${var.key_name}.pem ubuntu@${aws_instance.main.public_ip}" : "No key pair specified"
 }

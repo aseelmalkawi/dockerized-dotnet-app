@@ -13,14 +13,14 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Get latest Amazon Linux 2023 AMI
-data "aws_ami" "amazon_linux_2023" {
+# Get latest Ubuntu 24.04 LTS AMI
+data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {

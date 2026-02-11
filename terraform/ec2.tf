@@ -13,31 +13,5 @@ resource "aws_instance" "main" {
     encrypted             = true
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              # Update system
-              yum update -y
-              
-              # Install Docker
-              yum install -y docker
-              systemctl start docker
-              systemctl enable docker
-              usermod -aG docker ec2-user
-              
-              # Install AWS CLI v2 (already on AL2023 but ensure latest)
-              yum install -y aws-cli
-              
-              # Install docker-compose
-              curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
-              
-              # Log into ECR (region and account ID will be substituted)
-              aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${aws_ecr_repository.main.repository_url}
-              EOF
-
-  tags = {
-    Name = "${var.project_name}-ec2"
-  }
-
   depends_on = [aws_internet_gateway.main]
 }
