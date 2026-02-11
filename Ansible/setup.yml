@@ -1,0 +1,133 @@
+---
+- name: Bootstrap dev machine with Docker, Nginx, MicroK8s, and AWS CLI
+  hosts: all
+  become: true
+  vars:
+    user_name: "{{ ansible_user_id }}"
+    user_home: "{{ ansible_env.HOME }}"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - apt-transport-https
+          - unzip
+          - software-properties-common
+        state: present
+
+    # ---------------- Docker ----------------
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com | sh
+      when: docker_check.rc != 0
+
+    - name: Add user to docker group
+      user:
+        name: "{{ user_name }}"
+        groups: docker
+        append: yes
+
+    # ---------------- Nginx ----------------
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Enable and start Nginx
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    # ---------------- MicroK8s ----------------
+    - name: Check if MicroK8s is installed
+      command: microk8s status
+      register: microk8s_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install MicroK8s
+      snap:
+        name: microk8s
+        classic: yes
+      when: microk8s_check.rc != 0
+
+    - name: Add user to microk8s group
+      user:
+        name: "{{ user_name }}"
+        groups: microk8s
+        append: yes
+
+    - name: Ensure ~/.kube exists
+      file:
+        path: "{{ user_home }}/.kube"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+        mode: "0755"
+
+    - name: Enable MicroK8s addons
+      command: microk8s enable dashboard dns registry istio
+      when: microk8s_check.rc != 0
+
+    - name: Wait for MicroK8s to be ready
+      command: microk8s status --wait-ready
+      when: microk8s_check.rc != 0
+
+    # ---------------- AWS CLI ----------------
+    - name: Check if AWS CLI is installed
+      command: aws --version
+      register: aws_check
+      failed_when: false
+      changed_when: false
+
+    - name: Download AWS CLI
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+      when: aws_check.rc != 0
+
+    - name: Unzip AWS CLI
+      unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+      when: aws_check.rc != 0
+
+    - name: Install AWS CLI
+      command: /tmp/aws/install
+      when: aws_check.rc != 0
+
+    - name: Cleanup AWS CLI install files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/aws
+        - /tmp/awscliv2.zip
+      when: aws_check.rc != 0
+
+    # ---------------- Final Notice ----------------
+    - name: Reminder about group changes
+      debug:
+        msg: >
+          Installation complete. Log out and log back in so docker and microk8s
+          group changes actually apply. No, Ansible cannot fix that for you.

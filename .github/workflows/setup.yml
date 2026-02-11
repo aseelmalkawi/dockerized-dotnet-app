@@ -1,0 +1,28 @@
+name: Create Infra
+
+on:
+    workflow_dispatch:
+
+jobs:
+    setup: 
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+        
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: "1.8.0" 
+    
+        - name: Print Terraform version
+          run: terraform version
+        
+        - name: init
+          run: terraform init
+
+        - name: Install Ansible via pip
+          run: pip install ansible
+        
+        - name: Print Ansible version
+          run: ansible --version
