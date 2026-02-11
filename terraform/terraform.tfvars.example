@@ -1,0 +1,13 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and fill in your values
+
+aws_region          = "us-east-1"
+project_name        = "MagicVilla"
+vpc_cidr            = "10.0.0.0/16"
+public_subnet_cidr  = "10.0.1.0/24"
+availability_zone   = "us-east-1a"
+instance_type       = "t2.micro"
+key_name            = "cicd-aseel"  # Name of your existing EC2 key pair
+root_volume_size    = 8
+allowed_ssh_cidr    = ["0.0.0.0/0"]  # Replace with your IP!
+ecr_repository_name = "MagicVilla"
