@@ -10,19 +10,11 @@ jobs:
         - name: Checkout repo
           uses: actions/checkout@v4
         
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v3
-          with:
-            terraform_version: "1.8.0" 
-    
-        - name: Print Terraform version
-          run: terraform version
-        
         - name: init
           run: terraform init
-
-        - name: Install Ansible via pip
-          run: pip install ansible
         
-        - name: Print Ansible version
-          run: ansible --version
+        - name: apply
+          run: terraform apply
+
+        - name: ansible configuration
+          run: ansible-playbook -i Ansible/inventory Ansible/setup.yml
