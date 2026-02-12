@@ -28,7 +28,7 @@ def lambda_handler(event, context):
     ec2 = boto3.client("ec2", region_name=region)
     iam = boto3.client('iam', region_name=region)
     
-    # FIXED: Proper user data script that actually works
+    # FIXED: Proper user data script with corrected Ansible and Terraform installation
     user_data_content = """#!/bin/bash
 set -e
 exec > >(tee /var/log/user-data.log)
@@ -57,6 +57,22 @@ sudo -u ubuntu ./config.sh --url https://github.com/aseelmalkawi/dockerized-dotn
 ./svc.sh start
 
 echo "GitHub Actions Runner setup complete!"
+
+# Install Ansible
+echo "Installing Ansible..."
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install -y ansible
+
+# Install Terraform
+echo "Installing Terraform..."
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update
+sudo apt install -y terraform
+
+echo "All installations complete!"
 """
 
     # Encode to Base64
