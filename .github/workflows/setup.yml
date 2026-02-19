@@ -14,7 +14,9 @@ jobs:
           run: terraform init
         
         - name: apply
-          run: terraform apply
+          run: |
+            cd terraform
+            terraform apply --auto-approve
 
         - name: Write SSH key
           run: |
