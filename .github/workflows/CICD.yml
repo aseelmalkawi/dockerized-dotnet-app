@@ -152,4 +152,4 @@ jobs:
             chmod +x common/load_version.sh
             ./common/load_version.sh
         
-        - name: ssm command
+        # - name: ssm command
