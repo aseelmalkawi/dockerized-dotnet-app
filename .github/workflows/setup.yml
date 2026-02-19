@@ -32,8 +32,20 @@ jobs:
             echo "${{ secrets.KEY }}" > /tmp/deploy_key
             chmod 600 /tmp/deploy_key
 
+        - name: Write inventory
+          run: |
+            cat > Ansible/inventory.yml <<EOF
+            all:
+              hosts:
+                my_server:
+                  ansible_host: $(terraform output -raw server_ip)
+                  ansible_user: ubuntu
+                  ansible_ssh_private_key_file: /tmp/deploy_key
+            EOF
+
+        - name: Debug inventory
+          run: cat Ansible/inventory.yml && echo "---" && ansible-inventory -i Ansible/inventory.yml --list
+
         - name: ansible configuration
           run: |
-            ls Ansible
-            cat Ansible/inventory.yml
             ansible-playbook -i Ansible/inventory.yml Ansible/setup.yml

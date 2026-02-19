@@ -28,15 +28,3 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
-
-resource "local_file" "inventory" {
-  filename = "Ansible/inventory.yml"
-  content  = <<-EOT
-    all:
-      hosts:
-        my_server:
-          ansible_host: ${aws_instance.main.public_ip}
-          ansible_user: ubuntu
-          ansible_ssh_private_key_file: /tmp/deploy_key
-  EOT
-}
