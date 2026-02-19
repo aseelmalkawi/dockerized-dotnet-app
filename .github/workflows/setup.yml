@@ -19,6 +19,7 @@ jobs:
         - name: apply
           id: tf
           run: |
+            cd terraform
             terraform apply -auto-approve -no-color
             echo "server_ip=$(terraform -chdir=./terraform output -no-color -raw ec2_public_ip)" >> $GITHUB_OUTPUT
 
