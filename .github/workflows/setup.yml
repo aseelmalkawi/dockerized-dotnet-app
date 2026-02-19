@@ -35,4 +35,5 @@ jobs:
         - name: ansible configuration
           run: |
             ls Ansible
+            cat Ansible/inventory.yml
             ansible-playbook -i Ansible/inventory.yml Ansible/setup.yml
