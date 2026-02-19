@@ -13,7 +13,7 @@ jobs:
         - name: init
           run: |
             cd terraform
-            terraform init
+            terraform init -backend-config=backend-config.hcl
             terraform plan
         
         - name: apply
