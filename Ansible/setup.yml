@@ -3,8 +3,8 @@
   hosts: all
   become: true
   vars:
-    user_name: "{{ ansible_user_id }}"
-    user_home: "{{ ansible_env.HOME }}"
+    user_name: "{{ ansible_facts['user_id'] }}"
+    user_home: "{{ ansible_facts['env']['HOME'] }}"
 
   tasks:
     - name: Update apt cache
@@ -90,7 +90,7 @@
 
     - name: Enable MicroK8s dashboard
       command: microk8s enable dashboard
-      
+
     - name: Wait for MicroK8s to be ready
       command: microk8s status --wait-ready
       when: microk8s_check.rc != 0
