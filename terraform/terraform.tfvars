@@ -7,4 +7,4 @@ instance_type       = "t2.micro"
 key_name            = "feb-project"  # Name of your existing EC2 key pair
 root_volume_size    = 8
 allowed_ssh_cidr    = ["0.0.0.0/0"]  # Replace with your IP!
-ecr_repository_name = "MagicVilla"
+ecr_repository_name = "magic-villa"
