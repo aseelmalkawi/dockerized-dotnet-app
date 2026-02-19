@@ -23,6 +23,9 @@ jobs:
     Ansible: 
         runs-on: [self-hosted]
         steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+          
         - name: Write SSH key
           run: |
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
