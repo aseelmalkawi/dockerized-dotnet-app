@@ -39,7 +39,7 @@ jobs:
 
         - name: Write inventory
           run: |
-            printf "all:\n  hosts:\n    my_server:\n      ansible_host: %s\n      ansible_user: ubuntu\n      ansible_ssh_private_key_file: /tmp/deploy_key\n" \
+            printf "all:\n  hosts:\n    my_server:\n      ansible_host: %s\n      ansible_user: ubuntu\n      ansible_ssh_private_key_file: /tmp/deploy_key\n      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'\n" \
               "${{ needs.Terraform.outputs.server_ip }}" > Ansible/inventory.yml
 
         - name: Debug inventory
