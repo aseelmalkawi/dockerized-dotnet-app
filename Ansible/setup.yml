@@ -85,9 +85,12 @@
         mode: "0755"
 
     - name: Enable MicroK8s addons
-      command: microk8s enable dashboard dns registry istio
+      command: microk8s enable dns registry istio
       when: microk8s_check.rc != 0
 
+    - name: Enable MicroK8s dashboard
+      command: microk8s enable dashboard
+      
     - name: Wait for MicroK8s to be ready
       command: microk8s status --wait-ready
       when: microk8s_check.rc != 0
