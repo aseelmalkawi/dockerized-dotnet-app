@@ -28,3 +28,19 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
+
+resource "local_file" "inventory" {
+  filename = "inventory.yml"
+  content  = yamlencode({
+    all = {
+      hosts = {
+        my_server = {
+          ansible_host             = aws_instance.main.public_ip
+          ansible_user             = "ubuntu"
+          ansible_ssh_private_key_file = "/tmp/deploy_key"
+        }
+      }
+    }
+  })
+
+}

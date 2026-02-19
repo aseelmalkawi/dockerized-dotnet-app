@@ -16,5 +16,10 @@ jobs:
         - name: apply
           run: terraform apply
 
+        - name: Write SSH key
+          run: |
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+            chmod 600 /tmp/deploy_key
+
         - name: ansible configuration
           run: ansible-playbook -i Ansible/inventory Ansible/setup.yml

@@ -1,6 +1,5 @@
 """
 Lambda function to create EC2 instance as GitHub Actions runner
-FULLY FIXED VERSION - All issues resolved
 
 Required Lambda IAM permissions:
 - ec2:RunInstances
@@ -24,11 +23,8 @@ def lambda_handler(event, context):
     AMI_ID = "ami-0b6c6ebed2801a5cb"
     Instance_Type = "t2.micro"
     SG = ["sg-007617f4dfcbf348a"]
-    
     ec2 = boto3.client("ec2", region_name=region)
     iam = boto3.client('iam', region_name=region)
-    
-    # FIXED: Proper user data script with corrected Ansible and Terraform installation
     user_data_content = """#!/bin/bash
 set -e
 exec > >(tee /var/log/user-data.log)
