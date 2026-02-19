@@ -26,4 +26,6 @@ jobs:
             chmod 600 /tmp/deploy_key
 
         - name: ansible configuration
-          run: ansible-playbook -i Ansible/inventory Ansible/setup.yml
+          run: |
+            ls
+            ansible-playbook -i Ansible/inventory Ansible/setup.yml
