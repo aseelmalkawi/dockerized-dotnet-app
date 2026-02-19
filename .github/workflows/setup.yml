@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    setup: 
+    Terraform: 
         runs-on: [self-hosted]
         steps:
         - name: Checkout repo
@@ -20,7 +20,9 @@ jobs:
           run: |
             cd terraform
             terraform apply --auto-approve
-
+    Ansible: 
+        runs-on: [self-hosted]
+        steps:
         - name: Write SSH key
           run: |
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
@@ -28,5 +30,5 @@ jobs:
 
         - name: ansible configuration
           run: |
-            ls
+            ls Ansible
             ansible-playbook -i Ansible/inventory Ansible/setup.yml
