@@ -2,21 +2,27 @@
 - name: Bootstrap dev machine with Docker, Nginx, MicroK8s, and AWS CLI
   hosts: all
   become: true
+
   vars:
-    user_name: "{{ ansible_facts['user_id'] }}"
-    user_home: "{{ ansible_facts['env']['HOME'] }}"
+    user_name: "{{ ansible_user }}"
+    user_home: "/home/{{ ansible_user }}"
+    microk8s_channel: "1.31/stable"
+    microk8s_addons:
+      - dns
+      - registry
+      - dashboard
+      - istio
 
   tasks:
-    - name: Update apt cache
+
+    # ---------------- System ----------------
+    - name: Update and upgrade apt packages
       apt:
         update_cache: yes
+        upgrade: dist
         cache_valid_time: 3600
 
-    - name: Upgrade all packages
-      apt:
-        upgrade: dist
-
-    - name: Install prerequisites
+    - name: Install base packages
       apt:
         name:
           - ca-certificates
@@ -26,18 +32,26 @@
           - apt-transport-https
           - unzip
           - software-properties-common
+          - nginx
         state: present
 
-    # ---------------- Docker ----------------
-    - name: Check if Docker is installed
-      command: docker --version
-      register: docker_check
-      failed_when: false
-      changed_when: false
+    - name: Ensure nginx is enabled and started
+      service:
+        name: nginx
+        state: started
+        enabled: yes
 
-    - name: Install Docker
-      shell: curl -fsSL https://get.docker.com | sh
-      when: docker_check.rc != 0
+    # ---------------- Docker ----------------
+    - name: Install Docker via official repo
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
 
     - name: Add user to docker group
       user:
@@ -45,36 +59,13 @@
         groups: docker
         append: yes
 
-    # ---------------- Nginx ----------------
-    - name: Install Nginx
-      apt:
-        name: nginx
-        state: present
-
-    - name: Enable and start Nginx
-      service:
-        name: nginx
-        enabled: yes
-        state: started
-
     # ---------------- MicroK8s ----------------
-    - name: Check if MicroK8s is installed
-      command: microk8s status
-      register: microk8s_check
-      failed_when: false
-      changed_when: false
-
     - name: Install MicroK8s
       snap:
         name: microk8s
         classic: yes
-        channel: "1.31/stable"
-      when: microk8s_check.rc != 0
-      register: microk8s_install
-
-    - name: Refresh MicroK8s to stable channel
-      command: snap refresh microk8s --channel=1.31/stable
-      when: microk8s_check.rc == 0
+        channel: "{{ microk8s_channel }}"
+        state: present
 
     - name: Add user to microk8s group
       user:
@@ -82,7 +73,7 @@
         groups: microk8s
         append: yes
 
-    - name: Ensure ~/.kube exists
+    - name: Ensure kube directory exists
       file:
         path: "{{ user_home }}/.kube"
         state: directory
@@ -90,204 +81,33 @@
         group: "{{ user_name }}"
         mode: "0755"
 
-    - name: Check if MicroK8s is actually running
-      command: snap services microk8s
-      register: snap_services
-      changed_when: false
-
-    - name: Show snap services status
-      debug:
-        var: snap_services.stdout_lines
-
-    - name: Start MicroK8s if not active
-      command: microk8s start
-      when: "'inactive' in snap_services.stdout or 'disabled' in snap_services.stdout"
-      register: microk8s_manual_start
-
-    - name: Wait a bit after manual start
-      pause:
-        seconds: 30
-      when: microk8s_manual_start.changed
-
-    - name: Try quick status check (non-blocking)
-      command: microk8s status
-      register: quick_status
-      changed_when: false
-      failed_when: false
-      timeout: 30
-
-    - name: Show quick status
-      debug:
-        var: quick_status.stdout_lines
-
-    - name: Run microk8s inspect for debugging
-      command: microk8s inspect
-      register: inspect_output
-      when: "'not running' in quick_status.stdout or quick_status.rc != 0"
-      failed_when: false
-      changed_when: false
-
-    - name: Show inspect output if there's an issue
-      debug:
-        var: inspect_output.stdout_lines
-      when: inspect_output is defined
-
-    - name: Reset MicroK8s if it's stuck
-      block:
-        - name: Stop MicroK8s
-          command: microk8s stop
-          timeout: 60
-
-        - name: Wait after stop
-          pause:
-            seconds: 10
-
-        - name: Start MicroK8s fresh
-          command: microk8s start
-          timeout: 60
-
-        - name: Wait after fresh start
-          pause:
-            seconds: 30
-      when: "'not running' in quick_status.stdout or quick_status.rc != 0"
-
-    - name: Wait for MicroK8s to be ready (with reasonable timeout)
+    - name: Wait for MicroK8s to be ready
       command: microk8s status --wait-ready
-      timeout: 180
       register: microk8s_ready
-      retries: 2
-      delay: 30
-      until: microk8s_ready.rc == 0
-      failed_when: false
-
-    - name: Final status check
-      command: microk8s status
-      register: final_ready_check
-      changed_when: false
-      failed_when: false
-
-    - name: Show final status
-      debug:
-        var: final_ready_check.stdout_lines
-
-    - name: Fail if MicroK8s still not ready
-      fail:
-        msg: "MicroK8s failed to start properly. Check the inspect output above for details."
-      when: "'is not running' in final_ready_check.stdout"
-
-    - name: Ensure MicroK8s is started
-      command: microk8s start
-      register: microk8s_start
-      failed_when: false
-      changed_when: "'MicroK8s is running' not in microk8s_start.stdout"
-
-    - name: Wait again for MicroK8s to be ready after start
-      command: microk8s status --wait-ready
-      timeout: 300
-      register: microk8s_ready_final
       retries: 5
-      delay: 15
-      until: microk8s_ready_final.rc == 0
+      delay: 20
+      until: microk8s_ready.rc == 0
 
-    - name: Verify MicroK8s is actually running
-      command: microk8s status
-      register: microk8s_status_check
-      changed_when: false
-      failed_when: "'is not running' in microk8s_status_check.stdout"
+    - name: Enable required MicroK8s addons
+      command: "microk8s enable {{ item }}"
+      loop: "{{ microk8s_addons }}"
+      register: addon_enable
+      changed_when: "'Nothing to do' not in addon_enable.stdout"
+      failed_when: addon_enable.rc != 0
 
-    - name: Get current MicroK8s addon status
-      command: microk8s status --format short
-      register: addon_status
-      changed_when: false
-      retries: 3
+    - name: Verify cluster is running
+      command: microk8s kubectl get nodes
+      register: cluster_check
+      retries: 5
       delay: 10
-      until: addon_status.rc == 0
-
-    - name: Enable dns addon
-      command: microk8s enable dns
-      when: "'dns: disabled' in addon_status.stdout or 'dns is not available' in addon_status.stdout"
-      retries: 3
-      delay: 10
-      register: dns_enable
-      until: dns_enable.rc == 0
-
-    - name: Wait after dns addon
-      pause:
-        seconds: 15
-      when: dns_enable.changed
-
-    - name: Enable registry addon
-      command: microk8s enable registry
-      when: "'registry: disabled' in addon_status.stdout or 'registry is not available' in addon_status.stdout"
-      retries: 3
-      delay: 15
-      register: registry_enable
-      until: registry_enable.rc == 0
-      failed_when: false
-
-    - name: Check if registry addon worked
-      command: microk8s kubectl get pods -n container-registry
-      register: registry_check
-      retries: 10
-      delay: 10
-      until: registry_check.rc == 0
-      when: registry_enable.rc == 0
-      failed_when: false
-
-    - name: Manual registry recovery if needed
-      block:
-        - name: Stop microk8s
-          command: microk8s stop
-          
-        - name: Wait for stop
-          pause:
-            seconds: 10
-            
-        - name: Start microk8s
-          command: microk8s start
-          
-        - name: Wait for ready after restart
-          command: microk8s status --wait-ready
-          timeout: 300
-          
-        - name: Try enabling registry again
-          command: microk8s enable registry
-          retries: 2
-          delay: 15
-          register: registry_retry
-          until: registry_retry.rc == 0
-      when: registry_enable.failed or (registry_check is defined and registry_check.rc != 0)
-      ignore_errors: true
-
-    - name: Wait after registry addon
-      pause:
-        seconds: 15
-      when: registry_enable.changed or (registry_retry is defined and registry_retry.changed)
-
-    - name: Enable dashboard addon
-      command: microk8s enable dashboard
-      when: "'dashboard: disabled' in addon_status.stdout or 'dashboard is not available' in addon_status.stdout"
-      retries: 3
-      delay: 10
-      register: dashboard_enable
-      until: dashboard_enable.rc == 0
-      failed_when: false
-
-    - name: Enable istio addon
-      command: microk8s enable istio
-      when: "'istio: disabled' in addon_status.stdout or 'istio is not available' in addon_status.stdout"
-      retries: 3
-      delay: 10
-      register: istio_enable
-      until: istio_enable.rc == 0
-      ignore_errors: true
+      until: cluster_check.rc == 0
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed
       command: aws --version
       register: aws_check
-      failed_when: false
       changed_when: false
+      failed_when: false
 
     - name: Download AWS CLI
       get_url:
@@ -304,9 +124,11 @@
 
     - name: Install AWS CLI
       command: /tmp/aws/install
+      args:
+        creates: /usr/local/bin/aws
       when: aws_check.rc != 0
 
-    - name: Cleanup AWS CLI install files
+    - name: Cleanup AWS CLI installer
       file:
         path: "{{ item }}"
         state: absent
@@ -315,18 +137,9 @@
         - /tmp/awscliv2.zip
       when: aws_check.rc != 0
 
-    # ---------------- Final Status ----------------
-    - name: Get final MicroK8s status
-      command: microk8s status
-      register: final_status
-      changed_when: false
-
-    - name: Show MicroK8s status
-      debug:
-        var: final_status.stdout_lines
-
-    - name: Reminder about group changes
+    # ---------------- Final Reminder ----------------
+    - name: Reminder about group membership
       debug:
         msg: >
-          Installation complete. Log out and log back in so docker and microk8s
-          group changes actually apply. No, Ansible cannot fix that for you.
+          Installation complete. Log out and log back in for docker and microk8s
+          group membership to apply.
