@@ -59,7 +59,7 @@
         groups: docker
         append: yes
 
-    # ---------------- MicroK8s ----------------
+        # ---------------- MicroK8s ----------------
     - name: Install MicroK8s
       snap:
         name: microk8s
@@ -88,19 +88,39 @@
       delay: 20
       until: microk8s_ready.rc == 0
 
-    - name: Enable required MicroK8s addons
-      command: "microk8s enable {{ item }}"
-      loop: "{{ microk8s_addons }}"
-      register: addon_enable
-      changed_when: "'Nothing to do' not in addon_enable.stdout"
-      failed_when: addon_enable.rc != 0
+    # ---------- Enable DNS ----------
+    - name: Enable DNS addon
+      command: microk8s enable dns
+      register: dns_enable
+      changed_when: "'Nothing to do' not in dns_enable.stdout"
 
-    - name: Verify cluster is running
+    - name: Wait for DNS rollout
+      command: microk8s kubectl rollout status deployment/coredns -n kube-system
+      register: dns_rollout
+      retries: 15
+      delay: 10
+      until: dns_rollout.rc == 0
+
+    # ---------- Enable Registry ----------
+    - name: Enable Registry addon
+      command: microk8s enable registry
+      register: registry_enable
+      changed_when: "'Nothing to do' not in registry_enable.stdout"
+
+    - name: Wait for Registry pods
+      command: microk8s kubectl wait --for=condition=Ready pod -l app=registry -n container-registry --timeout=300s
+      register: registry_wait
+      retries: 5
+      delay: 15
+      until: registry_wait.rc == 0
+
+    # ---------- Final Cluster Validation ----------
+    - name: Validate cluster nodes
       command: microk8s kubectl get nodes
-      register: cluster_check
+      register: node_check
       retries: 5
       delay: 10
-      until: cluster_check.rc == 0
+      until: node_check.rc == 0
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed
