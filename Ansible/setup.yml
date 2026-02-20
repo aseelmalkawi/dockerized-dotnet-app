@@ -81,12 +81,17 @@
         group: "{{ user_name }}"
         mode: "0755"
 
-    - name: Wait for MicroK8s to be ready
-      command: microk8s status --wait-ready
-      register: microk8s_ready
-      retries: 5
-      delay: 20
-      until: microk8s_ready.rc == 0
+    - name: Ensure microk8s service is started
+      command: microk8s start
+      register: microk8s_start
+      changed_when: false
+
+    - name: Wait for Kubernetes API to respond
+      command: microk8s kubectl get nodes
+      register: kube_api_check
+      retries: 20
+      delay: 15
+      until: kube_api_check.rc == 0
 
     # ---------- Enable DNS ----------
     - name: Enable DNS addon
