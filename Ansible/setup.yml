@@ -90,13 +90,90 @@
         group: "{{ user_name }}"
         mode: "0755"
 
-    - name: Wait for MicroK8s to be ready (extended timeout)
+    - name: Check if MicroK8s is actually running
+      command: snap services microk8s
+      register: snap_services
+      changed_when: false
+
+    - name: Show snap services status
+      debug:
+        var: snap_services.stdout_lines
+
+    - name: Start MicroK8s if not active
+      command: microk8s start
+      when: "'inactive' in snap_services.stdout or 'disabled' in snap_services.stdout"
+      register: microk8s_manual_start
+
+    - name: Wait a bit after manual start
+      pause:
+        seconds: 30
+      when: microk8s_manual_start.changed
+
+    - name: Try quick status check (non-blocking)
+      command: microk8s status
+      register: quick_status
+      changed_when: false
+      failed_when: false
+      timeout: 30
+
+    - name: Show quick status
+      debug:
+        var: quick_status.stdout_lines
+
+    - name: Run microk8s inspect for debugging
+      command: microk8s inspect
+      register: inspect_output
+      when: "'not running' in quick_status.stdout or quick_status.rc != 0"
+      failed_when: false
+      changed_when: false
+
+    - name: Show inspect output if there's an issue
+      debug:
+        var: inspect_output.stdout_lines
+      when: inspect_output is defined
+
+    - name: Reset MicroK8s if it's stuck
+      block:
+        - name: Stop MicroK8s
+          command: microk8s stop
+          timeout: 60
+
+        - name: Wait after stop
+          pause:
+            seconds: 10
+
+        - name: Start MicroK8s fresh
+          command: microk8s start
+          timeout: 60
+
+        - name: Wait after fresh start
+          pause:
+            seconds: 30
+      when: "'not running' in quick_status.stdout or quick_status.rc != 0"
+
+    - name: Wait for MicroK8s to be ready (with reasonable timeout)
       command: microk8s status --wait-ready
-      timeout: 300
-      retries: 3
-      delay: 10
+      timeout: 180
       register: microk8s_ready
+      retries: 2
+      delay: 30
       until: microk8s_ready.rc == 0
+      failed_when: false
+
+    - name: Final status check
+      command: microk8s status
+      register: final_ready_check
+      changed_when: false
+      failed_when: false
+
+    - name: Show final status
+      debug:
+        var: final_ready_check.stdout_lines
+
+    - name: Fail if MicroK8s still not ready
+      fail:
+        msg: "MicroK8s failed to start properly. Check the inspect output above for details."
+      when: "'is not running' in final_ready_check.stdout"
 
     - name: Ensure MicroK8s is started
       command: microk8s start
