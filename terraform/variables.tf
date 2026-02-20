@@ -56,4 +56,9 @@ variable "ecr_repository_name" {
   description = "Name of the ECR repository"
   type        = string
   default     = "my-app"
+
+  validation {
+    condition     = can(regex("^(?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*$", var.ecr_repository_name))
+    error_message = "ECR repository name must be lowercase and can only contain letters, numbers, hyphens, underscores, and forward slashes."
+  }
 }
