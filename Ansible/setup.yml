@@ -98,10 +98,33 @@
       register: microk8s_ready
       until: microk8s_ready.rc == 0
 
+    - name: Ensure MicroK8s is started
+      command: microk8s start
+      register: microk8s_start
+      failed_when: false
+      changed_when: "'MicroK8s is running' not in microk8s_start.stdout"
+
+    - name: Wait again for MicroK8s to be ready after start
+      command: microk8s status --wait-ready
+      timeout: 300
+      register: microk8s_ready_final
+      retries: 5
+      delay: 15
+      until: microk8s_ready_final.rc == 0
+
+    - name: Verify MicroK8s is actually running
+      command: microk8s status
+      register: microk8s_status_check
+      changed_when: false
+      failed_when: "'is not running' in microk8s_status_check.stdout"
+
     - name: Get current MicroK8s addon status
       command: microk8s status --format short
       register: addon_status
       changed_when: false
+      retries: 3
+      delay: 10
+      until: addon_status.rc == 0
 
     - name: Enable dns addon
       command: microk8s enable dns
