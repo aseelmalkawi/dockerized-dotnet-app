@@ -10,7 +10,7 @@ jobs:
         - name: Checkout repo
           uses: actions/checkout@v4
         
-        - name: init
+        - name: Destroy
           run: |
             cd terraform
             terraform init -backend-config=backend-config.hcl
