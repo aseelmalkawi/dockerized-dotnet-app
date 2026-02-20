@@ -73,7 +73,6 @@
 
     - name: Refresh MicroK8s to stable channel
       command: snap refresh microk8s --channel=1.31/stable
-      when: microk8s_check.rc != 0
 
     - name: Add user to microk8s group
       user:
@@ -92,7 +91,6 @@
     - name: Wait for MicroK8s to be ready
       command: microk8s status --wait-ready
       timeout: 120
-      when: microk8s_check.rc != 0
 
     - name: Enable dns addon
       command: microk8s enable dns
