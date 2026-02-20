@@ -80,12 +80,7 @@
         owner: "{{ user_name }}"
         group: "{{ user_name }}"
         mode: "0755"
-
-    - name: Ensure microk8s service is started
-      command: microk8s start
-      register: microk8s_start
-      changed_when: false
-
+        
     - name: Wait for Kubernetes API to respond
       command: microk8s kubectl get nodes
       register: kube_api_check
