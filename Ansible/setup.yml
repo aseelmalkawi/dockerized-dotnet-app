@@ -94,12 +94,18 @@
       register: dns_enable
       changed_when: "'Nothing to do' not in dns_enable.stdout"
 
-    - name: Wait for DNS rollout
-      command: microk8s kubectl rollout status deployment/coredns -n kube-system
-      register: dns_rollout
-      retries: 15
-      delay: 10
-      until: dns_rollout.rc == 0
+    - name: Wait for DNS pods to be Ready
+      command: >
+        microk8s kubectl wait
+        --for=condition=Ready
+        pod
+        -l k8s-app=kube-dns
+        -n kube-system
+        --timeout=300s
+      register: dns_wait
+      retries: 5
+      delay: 15
+      until: dns_wait.rc == 0
 
     # ---------- Enable Registry ----------
     - name: Enable Registry addon
