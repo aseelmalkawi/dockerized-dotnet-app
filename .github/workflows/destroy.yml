@@ -1,0 +1,17 @@
+name: Destroy Infra
+
+on:
+    workflow_dispatch:
+        
+jobs:
+    Terraform: 
+        runs-on: [self-hosted]
+        steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+        
+        - name: init
+          run: |
+            cd terraform
+            terraform init -backend-config=backend-config.hcl
+            terraform destroy -auto-approve

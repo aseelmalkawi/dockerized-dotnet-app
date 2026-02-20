@@ -1,4 +1,4 @@
-name: Create Infra
+name: Provision Infra
 
 on:
     workflow_dispatch:
