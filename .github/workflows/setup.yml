@@ -13,13 +13,17 @@ jobs:
         - name: Checkout repo
           uses: actions/checkout@v4
         
-        - name: init
+        - name: Init
           run: |
             cd terraform
             terraform init -backend-config=backend-config.hcl
+
+        - name: Plan
+          run: |
+            cd terraform
             terraform plan
         
-        - name: apply
+        - name: Apply
           id: tf
           run: |
             cd terraform
