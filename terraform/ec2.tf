@@ -14,4 +14,8 @@ resource "aws_instance" "main" {
   }
 
   depends_on = [aws_internet_gateway.main]
+
+  tags = {
+    Name = "${var.project_name}-web-server"
+  }
 }
