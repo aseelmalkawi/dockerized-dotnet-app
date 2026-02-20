@@ -70,9 +70,11 @@
         classic: yes
         channel: "1.31/stable"
       when: microk8s_check.rc != 0
+      register: microk8s_install
 
     - name: Refresh MicroK8s to stable channel
       command: snap refresh microk8s --channel=1.31/stable
+      when: microk8s_check.rc == 0
 
     - name: Add user to microk8s group
       user:
@@ -88,25 +90,96 @@
         group: "{{ user_name }}"
         mode: "0755"
 
-    - name: Wait for MicroK8s to be ready
+    - name: Wait for MicroK8s to be ready (extended timeout)
       command: microk8s status --wait-ready
-      timeout: 120
+      timeout: 300
+      retries: 3
+      delay: 10
+      register: microk8s_ready
+      until: microk8s_ready.rc == 0
+
+    - name: Get current MicroK8s addon status
+      command: microk8s status --format short
+      register: addon_status
+      changed_when: false
 
     - name: Enable dns addon
       command: microk8s enable dns
-      when: microk8s_check.rc != 0
+      when: "'dns: disabled' in addon_status.stdout or 'dns is not available' in addon_status.stdout"
+      retries: 3
+      delay: 10
+      register: dns_enable
+      until: dns_enable.rc == 0
+
+    - name: Wait after dns addon
+      pause:
+        seconds: 15
+      when: dns_enable.changed
 
     - name: Enable registry addon
       command: microk8s enable registry
-      when: microk8s_check.rc != 0
+      when: "'registry: disabled' in addon_status.stdout or 'registry is not available' in addon_status.stdout"
+      retries: 3
+      delay: 15
+      register: registry_enable
+      until: registry_enable.rc == 0
+      failed_when: false
+
+    - name: Check if registry addon worked
+      command: microk8s kubectl get pods -n container-registry
+      register: registry_check
+      retries: 10
+      delay: 10
+      until: registry_check.rc == 0
+      when: registry_enable.rc == 0
+      failed_when: false
+
+    - name: Manual registry recovery if needed
+      block:
+        - name: Stop microk8s
+          command: microk8s stop
+          
+        - name: Wait for stop
+          pause:
+            seconds: 10
+            
+        - name: Start microk8s
+          command: microk8s start
+          
+        - name: Wait for ready after restart
+          command: microk8s status --wait-ready
+          timeout: 300
+          
+        - name: Try enabling registry again
+          command: microk8s enable registry
+          retries: 2
+          delay: 15
+          register: registry_retry
+          until: registry_retry.rc == 0
+      when: registry_enable.failed or (registry_check is defined and registry_check.rc != 0)
+      ignore_errors: true
+
+    - name: Wait after registry addon
+      pause:
+        seconds: 15
+      when: registry_enable.changed or (registry_retry is defined and registry_retry.changed)
 
     - name: Enable dashboard addon
       command: microk8s enable dashboard
-      when: microk8s_check.rc != 0
+      when: "'dashboard: disabled' in addon_status.stdout or 'dashboard is not available' in addon_status.stdout"
+      retries: 3
+      delay: 10
+      register: dashboard_enable
+      until: dashboard_enable.rc == 0
+      failed_when: false
 
     - name: Enable istio addon
       command: microk8s enable istio
-      when: microk8s_check.rc != 0
+      when: "'istio: disabled' in addon_status.stdout or 'istio is not available' in addon_status.stdout"
+      retries: 3
+      delay: 10
+      register: istio_enable
+      until: istio_enable.rc == 0
       ignore_errors: true
 
     # ---------------- AWS CLI ----------------
@@ -142,7 +215,16 @@
         - /tmp/awscliv2.zip
       when: aws_check.rc != 0
 
-    # ---------------- Final Notice ----------------
+    # ---------------- Final Status ----------------
+    - name: Get final MicroK8s status
+      command: microk8s status
+      register: final_status
+      changed_when: false
+
+    - name: Show MicroK8s status
+      debug:
+        var: final_status.stdout_lines
+
     - name: Reminder about group changes
       debug:
         msg: >
