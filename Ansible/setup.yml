@@ -64,62 +64,15 @@
       snap:
         name: microk8s
         classic: yes
-        channel: "{{ microk8s_channel }}"
         state: present
 
-    - name: Add user to microk8s group
-      user:
-        name: "{{ user_name }}"
-        groups: microk8s
-        append: yes
-
-    - name: Ensure kube directory exists
-      file:
-        path: "{{ user_home }}/.kube"
-        state: directory
-        owner: "{{ user_name }}"
-        group: "{{ user_name }}"
-        mode: "0755"
-        
-    - name: Wait for Kubernetes API to respond
+    - name: Wait for Kubernetes API
       command: microk8s kubectl get nodes
-      register: kube_api_check
+      register: kube_check
       retries: 20
       delay: 15
-      until: kube_api_check.rc == 0
-
-    # ---------- Enable DNS ----------
-    - name: Enable DNS addon
-      command: microk8s enable dns
-      register: dns_enable
-      changed_when: "'Nothing to do' not in dns_enable.stdout"
-
-    - name: Wait for DNS pods to be Ready
-      command: >
-        microk8s kubectl wait
-        --for=condition=Ready
-        pod
-        -l k8s-app=kube-dns
-        -n kube-system
-        --timeout=300s
-      register: dns_wait
-      retries: 5
-      delay: 15
-      until: dns_wait.rc == 0
-
-    # # ---------- Enable Registry ----------
-    # - name: Enable Registry addon
-    #   command: microk8s enable registry
-    #   register: registry_enable
-    #   changed_when: "'Nothing to do' not in registry_enable.stdout"
-
-    # - name: Wait for Registry pods
-    #   command: microk8s kubectl wait --for=condition=Ready pod -l app=registry -n container-registry --timeout=300s
-    #   register: registry_wait
-    #   retries: 5
-    #   delay: 15
-    #   until: registry_wait.rc == 0
-
+      until: kube_check.rc == 0
+      
     # ---------- Final Cluster Validation ----------
     - name: Validate cluster nodes
       command: microk8s kubectl get nodes
