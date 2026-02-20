@@ -20,11 +20,9 @@ resource "aws_iam_role" "ec2" {
 }
 
 # Policy to allow EC2 to pull from ECR
-resource "aws_iam_role_policy" "ecr_access" {
-  name = "${var.project_name}-ecr-access"
-  role = aws_iam_role.ec2.id
-
-  policy = "AmazonEC2ContainerRegistryPowerUser"
+resource "aws_iam_role_policy_attachment" "ecr_access" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
 # Optional: Add SSM permissions for Session Manager access
