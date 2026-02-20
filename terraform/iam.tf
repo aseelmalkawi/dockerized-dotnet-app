@@ -24,27 +24,7 @@ resource "aws_iam_role_policy" "ecr_access" {
   name = "${var.project_name}-ecr-access"
   role = aws_iam_role.ec2.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# Optional: Add CloudWatch logs permissions
-resource "aws_iam_role_policy_attachment" "cloudwatch" {
-  role       = aws_iam_role.ec2.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  policy = "AmazonEC2ContainerRegistryPowerUser"
 }
 
 # Optional: Add SSM permissions for Session Manager access
