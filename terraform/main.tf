@@ -38,9 +38,9 @@ resource "local_file" "inventory" {
           ansible_host             = aws_instance.main.public_ip
           ansible_user             = "ubuntu"
           ansible_ssh_private_key_file = "/tmp/deploy_key"
+          ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
         }
       }
     }
   })
-
 }

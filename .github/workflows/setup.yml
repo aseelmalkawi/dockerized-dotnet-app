@@ -28,13 +28,18 @@ jobs:
           run: |
             cd terraform
             terraform apply -auto-approve -no-color
-            echo "server_ip=$(terraform output -no-color -raw ec2_public_ip)" >> $GITHUB_OUTPUT
-            echo "ecr_url=$(terraform output -no-color -raw ecr_repository_url)" >> $GITHUB_OUTPUT
+            ls
+            ls ../Ansible
+          # echo "server_ip=$(terraform output -no-color -raw ec2_public_ip)" >> $GITHUB_OUTPUT
+          # echo "ecr_url=$(terraform output -no-color -raw ecr_repository_url)" >> $GITHUB_OUTPUT
+
+        - name: Debug inventory
+          run: cat Ansible/inventory.yml && echo "---" && ansible-inventory -i Ansible/inventory.yml --list
 
         - name: Upload inventory
           uses: actions/upload-artifact@v4
           with:
-              name: invetory
+              name: inventory
               path: Ansible/inventory.yml
         
         # - name: Push outputs to GitHub secrets
@@ -60,16 +65,13 @@ jobs:
         - name: Download inventory
           uses: actions/download-artifact@v4
           with:
-              name: invetory
+              name: inventory
               path: Ansible/inventory.yml
 
         # - name: Write inventory
         #   run: |
         #     printf "all:\n  hosts:\n    my_server:\n      ansible_host: %s\n      ansible_user: ubuntu\n      ansible_ssh_private_key_file: /tmp/deploy_key\n      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'\n" \
         #       "${{ needs.Terraform.outputs.server_ip }}" > Ansible/inventory.yml
-
-        - name: Debug inventory
-          run: cat Ansible/inventory.yml && echo "---" && ansible-inventory -i Ansible/inventory.yml --list
 
         - name: ansible configuration
           run: |
