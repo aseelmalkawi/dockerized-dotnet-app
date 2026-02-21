@@ -5,7 +5,7 @@ on:
 
 jobs:
     prepare: 
-      runs-on: ubuntu-latest
+      runs-on: [self-hosted]
       steps:
         - name: Checkout repo
           uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
             path: version.yaml
 
     build:
-      runs-on: ubuntu-latest
+      runs-on: [self-hosted]
       needs: prepare
       steps:
         - name: Checkout repo
@@ -62,7 +62,7 @@ jobs:
             path: artifacts/
     docker:
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: [self-hosted]
         steps:
             - name: Checkout repo
               uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
                 tags: ${{ secrets.ECR_URI }}/cicd-aseel:${{ env.VERSION }}
     
     promote:
-      runs-on: ubuntu-latest
+      runs-on: [self-hosted]
       needs: docker
       outputs:
         BASE_TAG: ${{ steps.promote.outputs.BASE_TAG }}
@@ -137,7 +137,7 @@ jobs:
             ECR_URI: ${{ secrets.ECR_URI }}
       
     deploy:
-      runs-on: ubuntu-latest
+      runs-on: [self-hosted]
       needs: promote
       steps:
         - name: Checkout repo
