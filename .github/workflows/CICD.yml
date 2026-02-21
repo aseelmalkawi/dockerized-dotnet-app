@@ -41,14 +41,10 @@ jobs:
               chmod +x common/load_version.sh
               ./common/load_version.sh
 
-        - name: Setup Nodejs
-          uses: actions/setup-node@v4
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v3
           with:
-            node-version: "20"
-            cache: 'npm'
-
-        - name: Install dep
-          run: npm i
+            dotnet-version: '7.0.x'
 
         - name: Package app artifact
           run: |

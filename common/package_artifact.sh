@@ -1,5 +1,9 @@
 #!/bin/bash
-
+aws codeartifact login --tool dotnet \
+    --domain ${{ env.CODEARTIFACT_DOMAIN }} \
+    --domain-owner ${{ env.CODEARTIFACT_OWNER }} \
+    --repository ${{ env.CODEARTIFACT_REPO }}
+     
 ARTIFACT_NAME="cicd-aseel-${VERSION}-${GITHUB_SHA:0:7}.tgz"
 # -p means to create if if it doesn't exist. Ensure the pipeline doesn't throw an error
 mkdir -p artifacts
