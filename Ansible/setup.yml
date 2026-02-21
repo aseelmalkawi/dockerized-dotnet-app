@@ -59,7 +59,7 @@
         groups: docker
         append: yes
 
-        # ---------------- MicroK8s ----------------
+    # ---------------- MicroK8s ----------------
     - name: Install MicroK8s
       snap:
         name: microk8s
@@ -72,7 +72,7 @@
       retries: 20
       delay: 15
       until: kube_check.rc == 0
-      
+
     # ---------- Final Cluster Validation ----------
     - name: Validate cluster nodes
       command: microk8s kubectl get nodes
@@ -80,6 +80,19 @@
       retries: 5
       delay: 10
       until: node_check.rc == 0
+
+    # ---------------- MicroK8s Addons ----------------
+    - name: Enable dns addon
+      command: microk8s enable dns
+      register: dns_result
+      changed_when: "'already enabled' not in dns_result.stdout"
+
+    - name: Wait for dns to be ready
+      command: microk8s kubectl rollout status deployment/coredns -n kube-system
+      retries: 10
+      delay: 10
+      register: dns_check
+      until: dns_check.rc == 0
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed

@@ -30,7 +30,6 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "local_file" "inventory" {
-  filename = "inventory.yml"
   filename = "Ansible/inventory.yml"
   content  = yamlencode({
     all = {
