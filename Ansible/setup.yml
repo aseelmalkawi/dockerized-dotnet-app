@@ -66,6 +66,13 @@
         classic: yes
         state: present
 
+    - name: Add user to microk8s group
+      user:
+        name: "{{ user_name }}"
+        groups: microk8s
+        append: yes
+      become: true
+
     - name: Wait for Kubernetes API
       command: microk8s kubectl get nodes
       register: kube_check
