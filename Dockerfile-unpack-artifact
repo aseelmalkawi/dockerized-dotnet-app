@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS extract
+WORKDIR /app
+
+# Copy the nupkg
+COPY ./nupkg/*.nupkg ./
+
+# Extract it (nupkg is just a zip)
+RUN apt-get update && apt-get install -y unzip
+RUN unzip -o *.nupkg -d ./extracted
+
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
+WORKDIR /app
+
+# Copy the extracted dlls
+COPY --from=extract /app/extracted/lib/net7.0/ .
+
+EXPOSE 8080
+ENV ASPNETCORE_ENVIRONMENT="Development"
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+
+ENTRYPOINT ["dotnet", "MagicVilla_VillaAPI.dll"]

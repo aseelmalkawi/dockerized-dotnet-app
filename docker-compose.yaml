@@ -1,6 +1,8 @@
 services:
   magicvilla:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile-unpack-artifact
     container_name: magicvilla
     ports:
       - "8080"
