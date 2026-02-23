@@ -48,10 +48,6 @@ chown -R ubuntu:ubuntu /home/ubuntu/actions-runner
 # Configure runner as ubuntu
 sudo -u ubuntu ./config.sh --url https://github.com/aseelmalkawi/dockerized-dotnet-app --token **** --unattended
 
-# Install and start service
-./svc.sh install ubuntu
-./svc.sh start
-
 echo "GitHub Actions Runner setup complete!"
 
 # Install Ansible
@@ -88,6 +84,10 @@ sudo systemctl start docker
 
 # Allow ubuntu user to run docker without sudo
 sudo usermod -aG docker ubuntu
+
+# Install and start service
+./svc.sh install ubuntu
+./svc.sh start
 
 echo "All installations complete!"
 """
