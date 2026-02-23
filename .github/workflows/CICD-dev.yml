@@ -18,7 +18,6 @@ jobs:
           uses: actions/setup-dotnet@v3
           with:
             dotnet-version: '7.0.x'
-            cache: true
 
         - name: Extract Version
           run : | 
@@ -55,7 +54,6 @@ jobs:
           uses: actions/setup-dotnet@v3
           with:
             dotnet-version: '7.0.x'
-            cache: true
 
         - name: Package/Publish app artifact
           run: dotnet publish -c Release -o ./app/publish
