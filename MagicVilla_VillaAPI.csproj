@@ -9,7 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="bin\Release\net7.0\publish\**\*" />
+    <Content Include="bin\Release\net7.0\publish\**\*">
+    <Pack>true</Pack>
+    <PackagePath>content/publish/</PackagePath>
+    </Content>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.3" />
