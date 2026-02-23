@@ -101,7 +101,6 @@ jobs:
 
             - name: Download app artifact from S3
               run: |
-                  mkdir ./publish
                   aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/publish/ ./app/ --recursive
                 
             - name: Login into AWS ecr
