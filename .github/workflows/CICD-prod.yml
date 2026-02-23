@@ -1,0 +1,151 @@
+name: CICD Prod
+
+on:
+    workflow_dispatch:
+
+jobs:
+    prepare: 
+      runs-on: [self-hosted]
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name: Extract Version
+          run : | 
+              chmod +x common/version_extract.sh
+              ./common/version_extract.sh
+
+        - name:  Debugging the extracted Version
+          run: echo $VERSION
+
+        - name: Upload Version artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: version
+            path: version.yaml
+
+    build:
+      runs-on: [self-hosted]
+      needs: prepare
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name: Download artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: version
+
+        - name: Load version into enviroment
+          run: |
+              chmod +x common/load_version.sh
+              ./common/load_version.sh
+
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v3
+          with:
+            dotnet-version: '7.0.x'
+
+        - name: Package app artifact
+          run: |
+              chmod +x common/package_artifact.sh
+              ./common/package_artifact.sh
+
+        - name: Upload build artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: app-build
+            path: artifacts/
+    docker:
+        needs: build
+        runs-on: [self-hosted]
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Download artifact
+              uses: actions/download-artifact@v4
+              with:
+                name: version
+
+            - name: Load version into enviroment
+              run: |
+                chmod +x common/load_version.sh
+                ./common/load_version.sh
+
+            - name: Debugging the extracted Version
+              run: echo $VERSION
+
+            - name: Download artifact 
+              uses: actions/download-artifact@v4
+              with:
+                name: app-build
+
+            - name: Extract app artifact
+              run: |
+                  chmod +x common/extract_artifact.sh
+                  ./common/extract_artifact.sh
+
+            # - name : Config AWS credentials
+            #   uses: aws-actions/configure-aws-credentials@v4
+            #   with:
+            #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+            #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            #     aws-region: ${{ secrets.AWS_REGION }}   
+                
+            - name: Login into AWS ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build and push Image 
+              uses: docker/build-push-action@v6 
+              with:
+                context: .
+                file: ./Dockerfile
+                push: true
+                tags: ${{ secrets.ECR_URI }}/cicd-aseel:${{ env.VERSION }}
+    
+    promote:
+      runs-on: [self-hosted]
+      needs: docker
+      outputs:
+        BASE_TAG: ${{ steps.promote.outputs.BASE_TAG }}
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name : Config AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ secrets.AWS_REGION }}   
+            
+        - name: Login into AWS ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Promote script
+          id: promote
+          run: |
+            chmod +x common/promote.sh
+            ./common/promote.sh
+          env:
+            AWS_REGION: ${{ secrets.AWS_REGION }}
+            ECR_URI: ${{ secrets.ECR_URI }}
+      
+    deploy:
+      runs-on: [self-hosted]
+      needs: promote
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+        - name: Download artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: version
+
+        - name: Load version into enviroment
+          run: |
+            chmod +x common/load_version.sh
+            ./common/load_version.sh
+        
+        # - name: ssm command
