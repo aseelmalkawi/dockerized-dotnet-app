@@ -61,7 +61,7 @@ jobs:
           run: dotnet publish -c Release -o ./app/publish
 
         - name: Upload artifact to S3
-          run: aws s3 cp ./publish s3://${{ env.S3_BUCKET }}/magic-villa/ --recursive
+          run: aws s3 cp ./app/publish s3://${{ env.S3_BUCKET }}/magic-villa/publish/ --recursive
 
         - name: Upload build artifacts
           uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
             - name: Download app artifact from S3
               run: |
                   mkdir ./publish
-                  aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/publish ./publish/ --recursive
+                  aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/publish ./app/ --recursive
                 
             - name: Login into AWS ecr
               uses: aws-actions/amazon-ecr-login@v2
