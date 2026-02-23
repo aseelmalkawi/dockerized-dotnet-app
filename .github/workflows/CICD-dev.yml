@@ -6,7 +6,7 @@ on:
 env:
   S3_BUCKET: "aseelmalkawi"  
   DOTNET_INSTALL_DIR: "/tmp/dotnet"
-  project_name: MagicVilla
+  PROJECT_NAME: "MagicVilla"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
 
