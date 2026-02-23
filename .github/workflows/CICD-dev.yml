@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
 
 env:
-  BUCKET_NAME: "aseelmalkawi"
+  S3_BUCKET: "aseelmalkawi"
   PROJECT_NAME: EFE
 
 jobs:
@@ -51,12 +51,10 @@ jobs:
             dotnet-version: '7.0.x'
 
         - name: Package/Publish app artifact
-          run: |
-              dotnet restore
-              dotnet publish -c Release -o ./app/publish
+          run: dotnet publish -c Release -o ./app/publish
 
-        - name: Push artifact to S3
-          run: s3 sync
+        - name: Upload artifact to S3
+          run: aws s3 cp ./publish s3://${{ env.S3_BUCKET }}/magicvilla/${{ env.VERSION }}/ --recursive
 
         - name: Upload build artifacts
           uses: actions/upload-artifact@v4
@@ -75,14 +73,6 @@ jobs:
               with:
                 name: app-build
 
-            - name: Download app artifact from S3
-              run: |
-                  chmod +x common/extract_artifact.sh
-                  ./common/extract_artifact.sh   
-                
-            - name: Login into AWS ecr
-              uses: aws-actions/amazon-ecr-login@v2
-
             - name: Download artifact
               uses: actions/download-artifact@v4
               with:
@@ -95,6 +85,14 @@ jobs:
 
             - name: Debugging the extracted Version
               run: echo $VERSION
+
+            - name: Download app artifact from S3
+              run: |
+                  mkdir ./publish
+                  aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/$${{ env.VERSION }}/ ./publish/ --recursive
+                
+            - name: Login into AWS ecr
+              uses: aws-actions/amazon-ecr-login@v2
 
             - name: Build and push Image 
               uses: docker/build-push-action@v6 
