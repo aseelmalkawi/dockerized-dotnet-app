@@ -6,6 +6,7 @@ on:
 env:
   S3_BUCKET: "aseelmalkawi"  
   DOTNET_INSTALL_DIR: "/tmp/dotnet"
+  project_name: 
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
 
@@ -101,7 +102,7 @@ jobs:
             - name: Download app artifact from S3
               run: |
                   mkdir ./publish
-                  aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/publish ./app/ --recursive
+                  aws s3 cp s3://${{ env.S3_BUCKET }}/magicvilla/publish/ ./app/ --recursive
                 
             - name: Login into AWS ecr
               uses: aws-actions/amazon-ecr-login@v2
