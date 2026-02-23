@@ -6,7 +6,6 @@ on:
 env:
   S3_BUCKET: "aseelmalkawi"  
   DOTNET_INSTALL_DIR: "/tmp/dotnet"
-  PROJECT_NAME: "MagicVilla"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
 
@@ -117,7 +116,7 @@ jobs:
                 context: .
                 file: ./Dockerfile-stage2
                 push: true
-                tags: ${{ env.ECR_URI }}/${{ env.PROJECT_NAME }}:${{ env.VERSION }}
+                tags: ${{ env.ECR_URI }}:${{ env.VERSION }}
       
     # deploy:
     #   runs-on: [self-hosted]
