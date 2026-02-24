@@ -148,4 +148,3 @@ jobs:
               --instance-ids "${{ env.INSTANCE_ID }}" \
               --parameters "commands=[\"$(cat common/deploy.sh | sed 's/"/\\"/g')\"]" \
               --comment "Running local script via SSM"
-              --region us-east-1
