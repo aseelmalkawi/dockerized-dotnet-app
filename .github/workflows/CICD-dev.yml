@@ -151,7 +151,7 @@ jobs:
               "Parameters": {
                 "commands": [
                   "echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml",
-                  "cd /tmp && docker compose up -d"
+                  "cd /tmp && docker compose up"
                 ]
               }
             }
