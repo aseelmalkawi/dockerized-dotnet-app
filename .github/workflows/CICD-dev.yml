@@ -138,7 +138,15 @@ jobs:
           run: |
             chmod +x common/load_outputs.sh
             ./common/load_outputs.sh
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-region: us-east-1
         
+        - name: Login into AWS ecr
+          uses: aws-actions/amazon-ecr-login@v2
+    
         - name: Deploy via SSM
           env:
             IMAGE: "${{ env.ECR_URI }}:${{ env.VERSION }}"
