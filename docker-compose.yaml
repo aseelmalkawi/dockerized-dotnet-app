@@ -1,6 +1,6 @@
 services:
   magicvilla:
-    build: ${IMAGE}
+    image: ${IMAGE}
     container_name: magicvilla
     ports:
       - "8080"
