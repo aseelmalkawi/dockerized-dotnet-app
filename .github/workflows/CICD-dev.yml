@@ -146,5 +146,5 @@ jobs:
               aws ssm send-command \
               --document-name "AWS-RunShellScript" \
               --instance-ids "${{ env.INSTANCE_ID }}" \
-              --parameters "commands=[\"$(cat common/deploy.sh | sed 's/"/\\"/g')\"]" \
+              --parameters "commands=[\"cat > /tmp/docker-compose.yml << docker-compose.yaml/", \"$(cat common/deploy.sh | sed 's/"/\\"/g')\"]" \
               --comment "Running local script via SSM"
