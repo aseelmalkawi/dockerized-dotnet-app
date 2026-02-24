@@ -143,9 +143,10 @@ jobs:
           env:
             IMAGE: "${{ env.ECR_URI }}:${{ env.VERSION }}"
           run: |
-            COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
-            echo $IMAGE
-            # Write the JSON input to a file to avoid shell escaping issues
+            # Substitute IMAGE value directly into the compose file
+            sed "s|\${IMAGE}|${{ env.IMAGE }}|g" docker-compose.yaml | base64 -w 0 > /tmp/compose_encoded
+            COMPOSE_CONTENT=$(cat /tmp/compose_encoded)
+
             cat > /tmp/ssm-input.json << EOF
             {
               "DocumentName": "AWS-RunShellScript",
