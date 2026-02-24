@@ -139,16 +139,23 @@ jobs:
             chmod +x common/load_outputs.sh
             ./common/load_outputs.sh
         
-        - name: Deploy the dockerized app via an SSM Command
-          env:
-            IMAGE: ${{ env.ECR_URI }}:${{ env.VERSION }}
+        - name: Deploy via SSM
           run: |
-              COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
-              aws ssm send-command \
-              --document-name "AWS-RunShellScript" \
-              --instance-ids "${{ env.INSTANCE_ID }}" \
-              --parameters "commands=[
-                  \"echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml\",
-                  \"cd /tmp && docker compose up -d\"
-                ]" \            
-              --comment "Running local script via SSM"
+            COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
+
+            # Write the JSON input to a file to avoid shell escaping issues
+            cat > /tmp/ssm-input.json << EOF
+            {
+              "DocumentName": "AWS-RunShellScript",
+              "InstanceIds": ["${{ env.INSTANCE_ID }}"],
+              "Parameters": {
+                "commands": [
+                  "echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml",
+                  "cd /tmp && docker compose up -d"
+                ]
+              }
+            }
+            EOF
+
+            aws ssm send-command \
+              --cli-input-json file:///tmp/ssm-input.json
