@@ -5,6 +5,6 @@ public_subnet_cidr  = "10.0.1.0/24"
 availability_zone   = "us-east-1a"
 instance_type       = "t2.small"
 key_name            = "feb-project"  # Name of your existing EC2 key pair
-root_volume_size    = 9
+root_volume_size    = 8
 allowed_ssh_cidr    = ["0.0.0.0/0"]  # Replace with your IP!
 ecr_repository_name = "magic-villa"
