@@ -140,6 +140,8 @@ jobs:
             ./common/load_outputs.sh
         
         - name: Deploy via SSM
+          env:
+            IMAGE: ${{ env.ECR_URI }}:${{ env.VERSION }}
           run: |
             COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
 
