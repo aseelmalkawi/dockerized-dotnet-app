@@ -1,8 +1,6 @@
 services:
   magicvilla:
-    build:
-      context: .
-      dockerfile: Dockerfile-stage2
+    build: ${IMAGE}
     container_name: magicvilla
     ports:
       - "8080"

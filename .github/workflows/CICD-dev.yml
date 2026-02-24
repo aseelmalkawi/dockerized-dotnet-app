@@ -118,19 +118,33 @@ jobs:
                 push: true
                 tags: ${{ env.ECR_URI }}:${{ env.VERSION }}
       
-    # deploy:
-    #   runs-on: [self-hosted]
-    #   steps:
-    #     - name: Checkout repo
-    #       uses: actions/checkout@v4
-    #     - name: Download artifact
-    #       uses: actions/download-artifact@v4
-    #       with:
-    #         name: version
+    deploy:
+      runs-on: [self-hosted]
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+        - name: Download artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: version
 
-    #     - name: Load version into enviroment
-    #       run: | 
-    #         chmod +x common/load_version.sh
-    #         ./common/load_version.sh
+        - name: Load version into enviroment
+          run: | 
+            chmod +x common/load_version.sh
+            ./common/load_version.sh
+
+        - name: Load Outputs
+          run: |
+            chmod +x common/load_outputs.sh
+            ./common/load_outputs.sh
         
-    #     - name: ssm command
+        - name: Deploy the dockerized app via an SSM Command
+          env:
+            IMAGE: ${{ env.ECR_URI }}:${{ env.VERSION }}
+          run: |
+              aws ssm send-command \
+              --document-name "AWS-RunShellScript" \
+              --instance-ids "${{ env.INSTANCE_ID }}" \
+              --parameters "commands=[\"$(cat common/deploy.sh | sed 's/"/\\"/g')\"]" \
+              --comment "Running local script via SSM"
+              --region us-east-1
