@@ -141,10 +141,10 @@ jobs:
         
         - name: Deploy via SSM
           env:
-            IMAGE: ${{ env.ECR_URI }}:${{ env.VERSION }}
+            IMAGE: "${{ env.ECR_URI }}:${{ env.VERSION }}"
           run: |
             COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
-
+            echo $IMAGE
             # Write the JSON input to a file to avoid shell escaping issues
             cat > /tmp/ssm-input.json << EOF
             {
