@@ -143,11 +143,12 @@ jobs:
           env:
             IMAGE: ${{ env.ECR_URI }}:${{ env.VERSION }}
           run: |
+              COMPOSE_CONTENT=$(base64 -w 0 docker-compose.yaml)
               aws ssm send-command \
               --document-name "AWS-RunShellScript" \
               --instance-ids "${{ env.INSTANCE_ID }}" \
               --parameters "commands=[
-                \"cat > /tmp/docker-compose.yml << 'EOF'\n$(cat docker-compose.yaml)\nEOF\",
-                \"$(cat common/deploy.sh)\"
-              ]"              
+                  \"echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml\",
+                  \"cd /tmp && docker compose up -d\"
+                ]" \            
               --comment "Running local script via SSM"
