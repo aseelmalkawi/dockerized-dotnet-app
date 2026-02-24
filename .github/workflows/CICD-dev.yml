@@ -139,20 +139,9 @@ jobs:
             chmod +x common/load_outputs.sh
             ./common/load_outputs.sh
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-region: us-east-1
-        
-        - name: Login into AWS ecr
-          uses: aws-actions/amazon-ecr-login@v2
-    
         - name: Deploy via SSM
-          env:
-            IMAGE: "${{ env.ECR_URI }}:${{ env.VERSION }}"
           run: |
-            # Substitute IMAGE value directly into the compose file
-            sed "s|\${IMAGE}|${{ env.IMAGE }}|g" docker-compose.yaml | base64 -w 0 > /tmp/compose_encoded
+            sed "s|\${IMAGE}|${{ env.ECR_URI }}:${{ env.VERSION }}|g" docker-compose.yaml | base64 -w 0 > /tmp/compose_encoded
             COMPOSE_CONTENT=$(cat /tmp/compose_encoded)
 
             cat > /tmp/ssm-input.json << EOF
@@ -161,8 +150,7 @@ jobs:
               "InstanceIds": ["${{ env.INSTANCE_ID }}"],
               "Parameters": {
                 "commands": [
-                  "echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml",
-                  "cd /tmp && docker-compose up -d"
+                  "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_URI }} && echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml && cd /tmp && docker-compose up -d"
                 ]
               }
             }
