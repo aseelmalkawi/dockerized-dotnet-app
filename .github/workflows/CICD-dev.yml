@@ -26,7 +26,7 @@ jobs:
               chmod +x common/version_extract.sh
               ./common/version_extract.sh
 
-        - name:  Debugging the extracted Version
+        - name: Debugging the extracted Version
           run: echo $VERSION
 
         - name: Upload Version artifact
@@ -35,22 +35,12 @@ jobs:
             name: version
             path: version.yaml
 
-    build:
+    build-artifact:
       runs-on: [self-hosted]
       needs: prepare
       steps:
         - name: Checkout repo
           uses: actions/checkout@v4
-
-        - name: Download artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: version
-
-        - name: Load version into enviroment
-          run: |
-              chmod +x common/load_version.sh
-              ./common/load_version.sh
 
         - name: Setup .NET
           uses: actions/setup-dotnet@v3
@@ -63,8 +53,8 @@ jobs:
         - name: Upload artifact to S3
           run: aws s3 cp ./app/publish s3://${{ env.S3_BUCKET }}/magic-villa/publish/ --recursive
 
-    docker:
-        needs: build
+    dockerize:
+        needs: build-artifact
         runs-on: [self-hosted]
         steps:
             - name: Checkout repo
@@ -110,10 +100,11 @@ jobs:
       
     deploy:
       runs-on: [self-hosted]
-      needs: docker
+      needs: dockerize
       steps:
         - name: Checkout repo
           uses: actions/checkout@v4
+          
         - name: Download artifact
           uses: actions/download-artifact@v4
           with:
@@ -131,21 +122,5 @@ jobs:
 
         - name: Deploy via SSM
           run: |
-            NGINX_CONF=$(base64 -w 0 default.conf)
-            sed "s|\${IMAGE}|${{ env.ECR_URI }}:${{ env.VERSION }}|g" docker-compose.yaml | base64 -w 0 > /tmp/compose_encoded
-            COMPOSE_CONTENT=$(cat /tmp/compose_encoded)
-
-            cat > /tmp/ssm-input.json << EOF
-            {
-              "DocumentName": "AWS-RunShellScript",
-              "InstanceIds": ["${{ env.INSTANCE_ID }}"],
-              "Parameters": {
-                "commands": [
-                  "rm -rf /tmp/default.conf /tmp/docker-compose.yml && echo $NGINX_CONF | base64 -d > /tmp/default.conf && echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml && aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_URI }} && cd /tmp && docker-compose down --rmi all && docker-compose up -d"
-                ]
-              }
-            }
-            EOF
-
-            aws ssm send-command \
-              --cli-input-json file:///tmp/ssm-input.json
+            chmod +x common/deploy.sh
+            ./common/deploy.sh
