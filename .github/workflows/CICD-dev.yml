@@ -90,7 +90,7 @@ jobs:
 
             - name: Download app artifact from S3
               run: |
-                  aws s3 cp s3://${{ env.S3_BUCKET }}/magic-villa/publish/ ./app/ --recursive
+                  aws s3 cp s3://${{ env.S3_BUCKET }}/magic-villa/publish/ ./app/publish/ --recursive
             
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
