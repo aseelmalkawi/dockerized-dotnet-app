@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
+FROM mcr.microsoft.com/dotnet/sdk:7.0
 WORKDIR /app
 
 COPY ./app .
@@ -13,4 +13,5 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 # RUN apt-get update && apt-get upgrade -y && apt-get install curl net-tools -y && netstat -tlnp
 
 # Define the entry point for the container
-ENTRYPOINT ["dotnet", "MagicVilla_VillaAPI.dll"]
+ENTRYPOINT ["dotnet"]
+CMD ["MagicVilla_VillaAPI.dll"]
