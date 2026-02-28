@@ -19,7 +19,7 @@
     - name: Update and upgrade apt packages
       apt:
         update_cache: yes
-        upgrade: dist
+        # upgrade: dist
         cache_valid_time: 3600
 
     - name: Install base packages
@@ -64,6 +64,7 @@
       snap:
         name: microk8s
         classic: yes
+        # channel: "{{ microk8s_channel }}"
         state: present
 
     - name: Add user to microk8s group
