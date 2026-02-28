@@ -1,7 +1,7 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 
-COPY ./app .
+COPY ./app/publish .
 
 EXPOSE 8080
 
