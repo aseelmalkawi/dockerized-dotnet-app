@@ -141,7 +141,7 @@ jobs:
               "InstanceIds": ["${{ env.INSTANCE_ID }}"],
               "Parameters": {
                 "commands": [
-                  "rm -rf /tmp/default.conf /tmp/docker-compose.yml && echo $NGINX_CONF | base64 -d > /tmp/default.conf && echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml && aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_URI }} && cd /tmp && docker-compose up -d"
+                  "rm -rf /tmp/default.conf /tmp/docker-compose.yml && echo $NGINX_CONF | base64 -d > /tmp/default.conf && echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml && aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_URI }} && cd /tmp && docker-compose down --rmi all && docker-compose up -d"
                 ]
               }
             }
