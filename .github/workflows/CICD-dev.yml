@@ -122,5 +122,5 @@ jobs:
 
         - name: Deploy via SSM
           run: |
-            chmod +x common/ssm_deploy.sh
-            ./common/ssm_deploy.sh ${{ env.ECR_URI }} ${{ env.VERSION }} ${{ env.INSTANCE_ID }}
+            chmod +x common/deploy_ssm.sh
+            ./common/deploy_ssm.sh ${{ env.ECR_URI }} ${{ env.VERSION }} ${{ env.INSTANCE_ID }}
