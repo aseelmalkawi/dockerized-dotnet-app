@@ -1,42 +1,21 @@
-NGINX_CONF=$(base64 -w 0 default.conf)
-COMPOSE_CONTENT=$(sed "s|\${IMAGE}|${{ env.ECR_URI }}:${{ env.VERSION }}|g" docker-compose.yaml | base64 -w 0)
-DEPLOY_SCRIPT=$(base64 -w 0 common/deploy.sh)
+#!/bin/bash
+set -e
 
-cat > /tmp/ssm-input.json << EOF
-{
-    "DocumentName": "AWS-RunShellScript",
-    "InstanceIds": ["${{ env.INSTANCE_ID }}"],
-    "TimeoutSeconds": 300,
-    "Parameters": {
-    "commands": [
-        "echo $DEPLOY_SCRIPT | base64 -d > /tmp/deploy.sh && chmod +x /tmp/deploy.sh && /tmp/deploy.sh ${{ env.ECR_URI }} $COMPOSE_CONTENT $NGINX_CONF"
-    ]
-    }
-}
-EOF
+ECR_URI=$1
+COMPOSE_CONTENT=$2
+NGINX_CONF=$3
 
-COMMAND_ID=$(aws ssm send-command \
-    --cli-input-json file:///tmp/ssm-input.json \
-    --query 'Command.CommandId' \
-    --output text)
+echo "Logging into ECR..."
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
 
-aws ssm wait command-executed \
-    --command-id $COMMAND_ID \
-    --instance-id ${{ env.INSTANCE_ID }}
+echo "Writing config files..."
+rm -rf /tmp/default.conf /tmp/docker-compose.yml
+echo $NGINX_CONF | base64 -d > /tmp/default.conf
+echo $COMPOSE_CONTENT | base64 -d > /tmp/docker-compose.yml
 
-STATUS=$(aws ssm get-command-invocation \
-    --command-id $COMMAND_ID \
-    --instance-id ${{ env.INSTANCE_ID }} \
-    --query 'StatusDetails' \
-    --output text)
+echo "Deploying..."
+cd /tmp
+docker-compose down --rmi all
+docker-compose up -d
 
-OUTPUT=$(aws ssm get-command-invocation \
-    --command-id $COMMAND_ID \
-    --instance-id ${{ env.INSTANCE_ID }} \
-    --query 'StandardOutputContent' \
-    --output text)
-
-echo "Output: $OUTPUT"
-echo "Status: $STATUS"
-
-[ "$STATUS" = "Success" ] || exit 1
+echo "Deploy complete"
