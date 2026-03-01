@@ -1,9 +1,6 @@
-echo "push the latest docker image with test tag..."
-
 # Step 1: fetch the latest tag into a variable
 LATEST_TAG=$(aws ecr describe-images \
-  --repository-name cicd-aseel \
-  --region "$AWS_REGION" \
+  --repository-name $PROJECT_NAME \
   --output json \
   | jq -r '
     .imageDetails[]
@@ -15,7 +12,7 @@ LATEST_TAG=$(aws ecr describe-images \
 # Step 2: trim quotations (if any)
 LATEST_TAG=$(echo "$LATEST_TAG" | tr -d '"')
 echo "Latest tag = $LATEST_TAG"
-export LATEST_ECR_IMAGE="$ECR_URI/cicd-aseel:$LATEST_TAG"
+export LATEST_ECR_IMAGE="$ECR_URI:$LATEST_TAG"
 
 # Step 3: pull the actual image
 echo "Pulling $LATEST_ECR_IMAGE"
@@ -28,11 +25,10 @@ echo "BASE_TAG=$BASE_TAG"
 echo "BASE_TAG=$BASE_TAG" >> "$GITHUB_OUTPUT"
 
 # Step 5: docker tag
-docker tag "$ECR_URI/cicd-aseel:$LATEST_TAG" "$ECR_URI/cicd-aseel:$BASE_TAG"
+docker tag "$ECR_URI:$LATEST_TAG" "$ECR_URI:$BASE_TAG"
 
 # Step 6: push the promoted image to ECR
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$ECR_URI"
 
-docker push "$ECR_URI/cicd-aseel:$BASE_TAG"
-
+docker push "$ECR_URI:$BASE_TAG"

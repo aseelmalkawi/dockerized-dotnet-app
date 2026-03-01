@@ -8,6 +8,7 @@ env:
   DOTNET_INSTALL_DIR: "/tmp/dotnet"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
+  PROJECT_NAME: magic-villa
 
 jobs:
     prepare: 
@@ -51,7 +52,7 @@ jobs:
           run: dotnet publish -c Release -o ./app/publish
 
         - name: Upload artifact to S3
-          run: aws s3 cp ./app/publish s3://${{ env.S3_BUCKET }}/magic-villa/publish/ --recursive
+          run: aws s3 cp ./app/publish s3://${{ env.S3_BUCKET }}/${{ env.PROJECT_NAME}}/publish/ --recursive
 
     dockerize:
         needs: build-artifact
@@ -80,7 +81,7 @@ jobs:
 
             - name: Download app artifact from S3
               run: |
-                  aws s3 cp s3://${{ env.S3_BUCKET }}/magic-villa/publish/ ./app/publish/ --recursive
+                  aws s3 cp s3://${{ env.S3_BUCKET }}/${{ env.PROJECT_NAME}}/publish/ ./app/publish/ --recursive
             
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -122,5 +123,5 @@ jobs:
 
         - name: Deploy via SSM
           run: |
-            chmod +x common/deploy_ssm.sh
-            ./common/deploy_ssm.sh ${{ env.ECR_URI }} ${{ env.VERSION }} ${{ env.INSTANCE_ID }}
+            chmod +x common/deploy_ssm_dev.sh
+            ./common/deploy_ssm_dev.sh ${{ env.ECR_URI }} ${{ env.VERSION }} ${{ env.INSTANCE_ID }}

@@ -1,0 +1,8 @@
+# templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.app.name }}-config
+data:
+  ASPNETCORE_ENVIRONMENT: {{ .Values.env.ASPNETCORE_ENVIRONMENT }}
+  ASPNETCORE_URLS: {{ .Values.env.ASPNETCORE_URLS }}

@@ -7,7 +7,7 @@ INSTANCE_ID=$3
 
 NGINX_CONF=$(base64 -w 0 default.conf)
 COMPOSE_CONTENT=$(sed "s|\${IMAGE}|$ECR_URI:$VERSION|g" docker-compose.yaml | base64 -w 0)
-DEPLOY_SCRIPT=$(base64 -w 0 common/deploy.sh)
+DEPLOY_SCRIPT=$(base64 -w 0 common/ssm_command_dev.sh)
 
 cat > /tmp/ssm-input.json << EOF
 {
