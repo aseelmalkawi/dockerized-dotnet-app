@@ -48,11 +48,15 @@
       until: kube_check.rc == 0
 
     # ---------------- MicroK8s Certificates ----------------
-    - name: Add runner IP to CSR template
+    - name: Get server public IP
+      shell: curl -s http://checkip.amazonaws.com | tr -d '[:space:]'
+      register: server_public_ip
+
+    - name: Add server public IP to CSR template
       lineinfile:
         path: /var/snap/microk8s/current/certs/csr.conf.template
         insertafter: "IP.2 = .*"
-        line: "IP.3 = {{ runner_ip }}"
+        line: "IP.3 = {{ server_public_ip.stdout }}"
         regexp: "IP.3 ="
 
     - name: Refresh MicroK8s certificates
