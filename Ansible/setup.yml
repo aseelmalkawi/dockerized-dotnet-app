@@ -110,14 +110,7 @@
       register: kubeconfig_output
 
     - name: Save kubeconfig locally
-      local_action:
-        module: copy
-        content: "{{ kubeconfig_output.stdout }}"
-        dest: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/kubeconfig"
-
-    - name: Debug kubeconfig location
-      run: |
-        find / -name "kubeconfig" 2>/dev/null
+      local_action: copy content="{{ kubeconfig_output.stdout }}" dest="{{ lookup('env', 'GITHUB_WORKSPACE') }}/kubeconfig"
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed
