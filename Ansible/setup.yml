@@ -105,10 +105,9 @@
       until: ingress_check.rc == 0
 
     # ---------------- Kubeconfig ----------------
-    - name: Generate kubeconfig with public IP
+    - name: Generate kubeconfig with server public IP
       shell: |
-        PUBLIC_IP=$(curl -s http://checkip.amazonaws.com)
-        microk8s config | sed "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/$PUBLIC_IP/g"
+        microk8s config | sed "s/10\.0\.1\.5/{{ ansible_host }}/g"
       register: kubeconfig_output
       
     - name: Save kubeconfig locally
