@@ -113,7 +113,11 @@
       local_action:
         module: copy
         content: "{{ kubeconfig_output.stdout }}"
-        dest: "{{ playbook_dir }}/kubeconfig"
+        dest: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/kubeconfig"
+
+    - name: Debug kubeconfig location
+      run: |
+        find / -name "kubeconfig" 2>/dev/null
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed
