@@ -41,19 +41,31 @@ jobs:
         - name: Checkout repo
           uses: actions/checkout@v4
 
-        - name: Download artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: version
-
-        - name: Load version into enviroment
-          run: |
-            chmod +x common/load_version.sh
-            ./common/load_version.sh
+        - name: Extract Version
+          run : | 
+              chmod +x common/version_extract.sh
+              ./common/version_extract.sh
 
         - name: Load Outputs
           run: |
             chmod +x common/load_outputs.sh
             ./common/load_outputs.sh
         
-        # - name: ssm command
+        - name: Configure kubeconfig
+          run: |
+            mkdir -p ~/.kube
+            echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+            chmod 600 ~/.kube/config
+
+        - name: Deploy
+          run: |
+            helm upgrade --install magicvilla ./helm \
+              -f helm/values.prod.yaml \
+              --set app.image=${{ env.ECR_URI }} \
+              --set app.tag=${{ env.VERSION }} \
+              --wait \
+              --timeout 5m
+
+        - name: Verify deployment
+          run: |
+            microk8s kubectl rollout status deployment/${ env.PROJECT_NAME }
