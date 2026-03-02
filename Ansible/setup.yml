@@ -14,7 +14,6 @@
       - istio
 
   tasks:
-
     # ---------------- System ----------------
     - name: Update and upgrade apt packages
       apt:
@@ -89,6 +88,36 @@
       delay: 10
       until: node_check.rc == 0
 
+    # ---------------- MicroK8s Certificates ----------------
+    - name: Get public IP
+      uri:
+        url: http://checkip.amazonaws.com
+        return_content: yes
+      register: public_ip
+
+    - name: Add public IP to CSR template
+      lineinfile:
+        path: /var/snap/microk8s/current/certs/csr.conf.template
+        insertafter: "IP.2 = .*"
+        line: "IP.3 = {{ public_ip.content | trim }}"
+        regexp: "IP.3 ="
+
+    - name: Refresh MicroK8s certificates
+      command: microk8s refresh-certs --cert server.crt
+
+    - name: Stop MicroK8s
+      command: microk8s stop
+
+    - name: Start MicroK8s
+      command: microk8s start
+
+    - name: Wait for Kubernetes API after restart
+      command: microk8s kubectl get nodes
+      register: kube_check
+      retries: 20
+      delay: 15
+      until: kube_check.rc == 0
+
     # ---------------- MicroK8s Addons ----------------
     - name: Enable dns addon
       command: microk8s enable dns
@@ -101,6 +130,16 @@
       delay: 10
       register: dns_check
       until: dns_check.rc == 0
+
+    - name: Generate kubeconfig with public IP
+      shell: microk8s config | sed "s/127.0.0.1/{{ ansible_host }}/g"
+      register: kubeconfig_output
+
+    - name: Save kubeconfig locally
+      local_action:
+        module: copy
+        content: "{{ kubeconfig_output.stdout }}"
+        dest: ./kubeconfig
 
     # ---------------- AWS CLI ----------------
     - name: Check if AWS CLI is installed
