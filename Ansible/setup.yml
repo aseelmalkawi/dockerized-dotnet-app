@@ -105,10 +105,12 @@
       until: ingress_check.rc == 0
 
     # ---------------- Kubeconfig ----------------
-    - name: Generate kubeconfig with server public IP
-      shell: microk8s config | sed "s/127.0.0.1/{{ ansible_host }}/g"
+    - name: Generate kubeconfig with public IP
+      shell: |
+        PUBLIC_IP=$(curl -s http://checkip.amazonaws.com)
+        microk8s config | sed "s/[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/$PUBLIC_IP/g"
       register: kubeconfig_output
-
+      
     - name: Save kubeconfig locally
       local_action: copy content="{{ kubeconfig_output.stdout }}" dest="{{ lookup('env', 'GITHUB_WORKSPACE') }}/kubeconfig"
 
