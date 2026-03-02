@@ -78,12 +78,12 @@ jobs:
             RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
             ansible-playbook -i Ansible/inventory.yml Ansible/setup.yml  --extra-vars "runner_ip=$RUNNER_IP"
         
-        - name: Debug kubeconfig location
-          run: |
-            find / -name "kubeconfig" 2>/dev/null
+        # - name: Debug kubeconfig location
+        #   run: |
+        #     find / -name "kubeconfig" 2>/dev/null
 
         - name: Push kubeconfig to GitHub Secrets
           env:
             GH_TOKEN: ${{ secrets.GH_PAT }}
           run: |
-            gh secret set KUBE_CONFIG < ./kubeconfig
+            gh secret set KUBE_CONFIG < ${{ github.workspace }}/kubeconfig
