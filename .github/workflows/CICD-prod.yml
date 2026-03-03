@@ -60,7 +60,7 @@ jobs:
         - name: Deploy
           run: |
             helm upgrade --install magicvilla ./helm \
-              -f helm/values.prod.yaml \
+              -f helm/values.yaml \
               --set app.image=${{ env.ECR_URI }} \
               --set app.tag=${{ env.VERSION }} \
               --wait \
