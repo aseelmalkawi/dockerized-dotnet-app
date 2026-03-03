@@ -27,6 +27,19 @@
           - software-properties-common
         state: present
 
+    # ---------------- Nginx ----------------
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
     # ---------------- MicroK8s ----------------
     - name: Install MicroK8s
       snap:
