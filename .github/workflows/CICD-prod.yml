@@ -85,4 +85,4 @@ jobs:
 
         - name: Verify deployment
           run: |
-            microk8s kubectl rollout status deployment/${{ env.PROJECT_NAME }}
+            kubectl rollout status deployment/${{ env.PROJECT_NAME }}
