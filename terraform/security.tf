@@ -30,6 +30,16 @@ resource "aws_security_group" "ec2" {
     description = "HTTPS access"
   }
 
+  # Helm access
+  ingress {
+    from_port   = 16443
+    to_port     = 16443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Helm access"
+  }
+
+
   # Outbound internet access
   egress {
     from_port   = 0
