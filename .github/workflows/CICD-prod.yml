@@ -62,6 +62,7 @@ jobs:
             helm upgrade --install magicvilla ./helm \
               -f helm/values.yaml \
               --set app.image=${{ env.ECR_URI }} \
+              --set app.name=${{ env.PROJECT_NAME }} \
               --set app.tag=${{ env.VERSION }} \
               --wait \
               --timeout 5m
