@@ -10,7 +10,7 @@ cat > /tmp/ssm-input.json << EOF
   "TimeoutSeconds": 300,
   "Parameters": {
     "commands": [
-      "rm -f /etc/nginx/conf.d/default.conf && echo $NGINX_CONF | base64 -d > /etc/nginx/conf.d/default.conf"
+      "rm -f /etc/nginx/conf.d/default.conf && echo $NGINX_CONF | base64 -d > /etc/nginx/conf.d/default-prod.conf"
     ]
   }
 }
@@ -21,7 +21,7 @@ COMMAND_ID=$(aws ssm send-command \
   --query 'Command.CommandId' \
   --output text)
 
-echo "Waiting for deployment..."
+echo "Waiting for the command to be executed..."
 aws ssm wait command-executed \
   --command-id $COMMAND_ID \
   --instance-id $INSTANCE_ID
@@ -32,13 +32,6 @@ STATUS=$(aws ssm get-command-invocation \
   --query 'StatusDetails' \
   --output text)
 
-OUTPUT=$(aws ssm get-command-invocation \
-  --command-id $COMMAND_ID \
-  --instance-id $INSTANCE_ID \
-  --query 'StandardOutputContent' \
-  --output text)
-
-echo "Output: $OUTPUT"
 echo "Status: $STATUS"
 
 [ "$STATUS" = "Success" ] || exit 1
