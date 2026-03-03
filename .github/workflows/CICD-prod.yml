@@ -68,6 +68,11 @@ jobs:
               --docker-password=$(aws ecr get-login-password --region us-east-1) \
               --dry-run=client -o yaml | kubectl apply -f -
 
+        - name: Copy nginx config to the server
+          run: |
+            chmod +x common/deploy_ssm_prod.sh
+            ./common/deploy_ssm_prod.sh
+
         - name: Deploy
           run: |
             helm upgrade --install magicvilla ./helm \
@@ -80,4 +85,4 @@ jobs:
 
         - name: Verify deployment
           run: |
-            microk8s kubectl rollout status deployment/${ env.PROJECT_NAME }
+            microk8s kubectl rollout status deployment/${{ env.PROJECT_NAME }}

@@ -5,5 +5,5 @@ app:
   port: 8080
 
 env:
-  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_ENVIRONMENT: Development
   ASPNETCORE_URLS: http://0.0.0.0:8080
