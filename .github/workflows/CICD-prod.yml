@@ -57,6 +57,14 @@ jobs:
             echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
             chmod 600 ~/.kube/config
 
+        - name: Create ECR image pull secret
+          run: |
+            kubectl create secret docker-registry ecr-secret \
+              --docker-server=${{ env.ECR_URI }} \
+              --docker-username=AWS \
+              --docker-password=$(aws ecr get-login-password --region us-east-1) \
+              --dry-run=client -o yaml | kubectl apply -f -
+
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@v4
           with:
