@@ -50,7 +50,10 @@ jobs:
           run: |
             chmod +x common/load_outputs.sh
             ./common/load_outputs.sh
-        
+
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+
         - name: Configure kubeconfig
           run: |
             mkdir -p ~/.kube
@@ -64,14 +67,6 @@ jobs:
               --docker-username=AWS \
               --docker-password=$(aws ecr get-login-password --region us-east-1) \
               --dry-run=client -o yaml | kubectl apply -f -
-
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-region: us-east-1
-        
-        - name: Login into AWS ecr
-          uses: aws-actions/amazon-ecr-login@v2
 
         - name: Deploy
           run: |
